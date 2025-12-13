@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  # Senin yazdığın Flask Uygulaması
+  frontend:
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app  # Kodda değişiklik yaparsan anında yansıması için (Hot Reload benzeri)
+    environment:
+      # Docker içinde 'localhost' çalışmaz, servis adını (backend) kullanırız
+      - POCKETBASE_URL=http://backend:8090
+      - FLASK_SECRET_KEY=gizli_anahtar_docker_icinde
+    depends_on:
+      - backend
+
+  # PocketBase Servisi
+  backend:
+    image: ghcr.io/muchobien/pocketbase:latest # Hazır PocketBase imajı
+    ports:
+      - "8090:8090"
+    volumes:
+      - ./pb_data:/pb_data # Veriler kaybolmasın diye klasörü dışarı aktar
+    command: 
+      - --publicDir=/pb_public # Opsiyonel: Statik dosyalar için
