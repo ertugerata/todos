@@ -1,3 +1,3 @@
 .env
 pocketbase
-pg_data
+pg_data/*
