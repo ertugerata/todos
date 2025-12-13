@@ -3,92 +3,18 @@ import time
 from dotenv import load_dotenv
 from flask import Flask, request, session, redirect, url_for
 import requests
+import init_db  # Import the new DB initialization script
 
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY")
 PB_URL = os.getenv("POCKETBASE_URL")
+# Admin credentials might still be loaded but are not used for schema creation anymore
 PB_ADMIN_EMAIL = os.getenv("PB_ADMIN_EMAIL")
 PB_ADMIN_PASSWORD = os.getenv("PB_ADMIN_PASSWORD")
 
-def ensure_schema():
-    """PocketBase şemasını (koleksiyonları) kontrol eder ve yoksa oluşturur."""
-    print("PocketBase şeması kontrol ediliyor...")
-
-    # PocketBase'in hazır olmasını bekle
-    admin_token = None
-    for i in range(10):
-        try:
-            resp = requests.post(f"{PB_URL}/api/admins/auth-with-password", json={
-                "identity": PB_ADMIN_EMAIL,
-                "password": PB_ADMIN_PASSWORD
-            })
-            if resp.status_code == 200:
-                admin_token = resp.json()['token']
-                print("Admin girişi başarılı.")
-                break
-        except requests.exceptions.ConnectionError:
-            print(f"PocketBase henüz hazır değil... ({i+1}/10)")
-            time.sleep(2)
-
-    if not admin_token:
-        print("Hata: Admin girişi yapılamadı. Şema kontrolü atlanıyor.")
-        return
-
-    headers = {"Authorization": f"Bearer {admin_token}"}
-
-    # 'todos' koleksiyonunu kontrol et
-    try:
-        resp = requests.get(f"{PB_URL}/api/collections/todos", headers=headers)
-        if resp.status_code == 200:
-            print("'todos' koleksiyonu zaten mevcut.")
-            return
-    except:
-        pass
-
-    print("'todos' koleksiyonu oluşturuluyor...")
-
-    new_collection = {
-        "name": "todos",
-        "type": "base",
-        "schema": [
-            {
-                "name": "title",
-                "type": "text",
-                "required": True,
-                "presentable": True
-            },
-            {
-                "name": "is_completed",
-                "type": "bool",
-            },
-            {
-                "name": "user",
-                "type": "relation",
-                "required": True,
-                "options": {
-                    "collectionId": "users",  # PocketBase varsayılan kullanıcı koleksiyonu ID'si veya adı
-                    "cascadeDelete": False,
-                    "maxSelect": 1,
-                    "displayFields": []
-                }
-            }
-        ],
-        "listRule": "@request.auth.id != '' && user = @request.auth.id",
-        "viewRule": "@request.auth.id != '' && user = @request.auth.id",
-        "createRule": "@request.auth.id != '' && user = @request.auth.id",
-        "updateRule": "@request.auth.id != '' && user = @request.auth.id",
-        "deleteRule": "@request.auth.id != '' && user = @request.auth.id",
-    }
-
-    # Koleksiyonu oluştur
-    resp = requests.post(f"{PB_URL}/api/collections", json=new_collection, headers=headers)
-    if resp.status_code == 200:
-        print("'todos' koleksiyonu başarıyla oluşturuldu.")
-    else:
-        print(f"Koleksiyon oluşturma hatası: {resp.text}")
-
+# ensure_schema function removed as we use init_db.py via SQL
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -214,27 +140,22 @@ def toggle_status(todo_id):
     
     return redirect(url_for('dashboard'))
 
-# --- YENİ EKLENEN DELETE FONKSİYONU ---
 @app.route('/delete-todo/<todo_id>')
 def delete_todo(todo_id):
-    # 1. Güvenlik Kontrolü
     if 'user_token' not in session:
         return redirect(url_for('login'))
 
     headers = {"Authorization": f"Bearer {session['user_token']}"}
-    
-    # 2. Silme İsteği (DELETE)
-    # PocketBase API Kuralı (Delete Rule) sayesinde, 
-    # kullanıcı sadece kendi oluşturduğu kaydı silebilir.
-    del_resp = requests.delete(f"{PB_URL}/api/collections/todos/records/{todo_id}", headers=headers)
-    
-    # İsteğe bağlı: Hata yönetimi yapılabilir ama şimdilik direkt yönlendiriyoruz.
+    requests.delete(f"{PB_URL}/api/collections/todos/records/{todo_id}", headers=headers)
     return redirect(url_for('dashboard'))
 
 if __name__ == '__main__':
-    # host='0.0.0.0' EKLEMEK ZORUNDASIN
-
-    # Uygulama başlarken şemayı kontrol et
-    ensure_schema()
+    # Initialize DB via SQL
+    print("Initializing PocketBase schema via SQL...")
+    for i in range(30):
+        if init_db.init_db():
+            break
+        print(f"Retrying DB init in 2 seconds... ({i+1}/30)")
+        time.sleep(2)
 
     app.run(debug=True, port=5000, host='0.0.0.0')
