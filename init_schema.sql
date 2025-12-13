@@ -1,4 +1,4 @@
-INSERT INTO _collections (id, system, name, type, schema, indexes, listRule, viewRule, createRule, updateRule, deleteRule, options, created, updated)
+INSERT INTO _collections (id, system, name, type, fields, indexes, listRule, viewRule, createRule, updateRule, deleteRule, options, created, updated)
 VALUES (
     '{collection_id}',
     0,

@@ -39,8 +39,8 @@ def init_db():
         users_id = row[0]
         print(f"Found 'users' collection ID: {users_id}")
 
-        # Prepare schema JSON
-        schema = [
+        # Prepare fields JSON
+        fields = [
             {
                 "system": False,
                 "id": generate_id(),
@@ -48,12 +48,9 @@ def init_db():
                 "type": "text",
                 "required": True,
                 "presentable": True,
-                "unique": False,
-                "options": {
-                    "min": None,
-                    "max": None,
-                    "pattern": ""
-                }
+                "min": None,
+                "max": None,
+                "pattern": ""
             },
             {
                 "system": False,
@@ -61,9 +58,7 @@ def init_db():
                 "name": "is_completed",
                 "type": "bool",
                 "required": False,
-                "presentable": False,
-                "unique": False,
-                "options": {}
+                "presentable": False
             },
             {
                 "system": False,
@@ -72,18 +67,15 @@ def init_db():
                 "type": "relation",
                 "required": True,
                 "presentable": False,
-                "unique": False,
-                "options": {
-                    "collectionId": users_id,
-                    "cascadeDelete": False,
-                    "minSelect": None,
-                    "maxSelect": 1,
-                    "displayFields": []
-                }
+                "collectionId": users_id,
+                "cascadeDelete": False,
+                "minSelect": None,
+                "maxSelect": 1,
+                "displayFields": []
             }
         ]
 
-        schema_json = json.dumps(schema)
+        fields_json = json.dumps(fields)
         collection_id = generate_id()
 
         # Read SQL template
@@ -93,7 +85,7 @@ def init_db():
         # Format the SQL
         final_sql = sql_template.format(
             collection_id=collection_id,
-            schema_json=schema_json
+            schema_json=fields_json
         )
 
         print("Executing SQL to create 'todos' collection...")
