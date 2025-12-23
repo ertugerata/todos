@@ -1,3 +1,16 @@
-.env
+# Python
+__pycache__/
+*.pyc
+
+# Virtual Environment
+venv/
+venv_verify/
+
+# PocketBase
 pocketbase
-pb_data/*
+pb_data/
+pb_output.log
+*.zip
+
+# Environment Variables
+.env
