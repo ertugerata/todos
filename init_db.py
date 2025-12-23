@@ -5,7 +5,7 @@ import string
 import os
 import time
 
-DB_PATH = '/pb_data/data.db'
+DB_PATH = './pb_data/data.db'
 
 def generate_id(length=15):
     chars = string.ascii_lowercase + string.digits
