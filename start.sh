@@ -9,7 +9,7 @@ if [ ! -f "pocketbase" ]; then
     echo "PocketBase executable not found. Downloading..."
     # Note: This downloads the Linux AMD64 version.
     # For other OS, please download the appropriate version from https://github.com/pocketbase/pocketbase/releases
-    curl -L -o pocketbase.zip https://github.com/pocketbase/pocketbase/releases/download/v0.22.8/pocketbase_0.22.8_linux_amd64.zip
+    curl -L -o pocketbase.zip https://github.com/pocketbase/pocketbase/releases/download/v0.23.0/pocketbase_0.23.0_linux_amd64.zip
     unzip pocketbase.zip
     rm pocketbase.zip
     chmod +x pocketbase
